@@ -20,7 +20,6 @@ public class NotifyTest {
 		try {
 			zk = new ZooKeeper(registryAddress, Constants.ZK_SESSION_TIMEOUT, new Watcher() {
 				
-				@Override
 				public void process(WatchedEvent event) {
 					System.out.println("wactch : connected");
 					

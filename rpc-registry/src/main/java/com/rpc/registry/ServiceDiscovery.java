@@ -22,6 +22,8 @@ public class ServiceDiscovery {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovery.class);
 	
+	private static ZooKeeper zk = null;
+	
 	private CountDownLatch latch = new CountDownLatch(1);
 	
 	private volatile List<String> dataList = new ArrayList<String>();
@@ -30,9 +32,8 @@ public class ServiceDiscovery {
 	
 	public ServiceDiscovery(String registryAddress) {
 		this.registryAddress = registryAddress;
-		ZooKeeper zk =  connectServer();
-		if (null != zk) {
-			watchNode(zk);
+		if (null != getZk()) {
+//			watchNode(zk);
 		}
 	}
 	
@@ -43,15 +44,36 @@ public class ServiceDiscovery {
 //		}
 //	}
 	
-	public String discover() {
-		String data = null;
-		int size = dataList.size();
-//		if (0 == size) {
-//			ZooKeeper zk =  connectServer();
-//			if (null != zk) {
-//				watchNode(zk);
+//	public String discover() {
+//		String data = null;
+//		int size = dataList.size();
+////		if (0 == size) {
+////			ZooKeeper zk =  connectServer();
+////			if (null != zk) {
+////				watchNode(zk);
+////			}
+////		}
+//		
+//		if (size > 0) {
+//			if (size == 1) {
+//				data = dataList.get(0);
+//				LOGGER.debug("using only data: {}", data);
+//			} else {
+//				data = dataList.get(ThreadLocalRandom.current().nextInt(size));
+//				LOGGER.debug("using only data: {}", data);
 //			}
 //		}
+//		return data;
+//	}
+	
+	public String discover(String node) {
+		String data = null;
+		int size = dataList.size();
+		if (0 == size) {
+			if (null != getZk()) {
+				watchNode(zk, node);
+			}
+		}
 		
 		if (size > 0) {
 			if (size == 1) {
@@ -70,7 +92,7 @@ public class ServiceDiscovery {
 	 * @return
 	 */
 	private ZooKeeper connectServer() {
-		ZooKeeper zk = null;
+//		ZooKeeper zk = null;
 		try {
 			zk = new ZooKeeper(registryAddress, Constant.ZK_SESSION_TIMEOUT, new Watcher(){
 				public void process(WatchedEvent event) {
@@ -88,31 +110,66 @@ public class ServiceDiscovery {
 		return zk;
 	}
 	
+//	/**
+//	 * 服务发现， 如果ZK 出现变动
+//	 * @param zk
+//	 */
+//	private void watchNode(final ZooKeeper zk) {
+//		try {
+//			List<String> nodeList = zk.getChildren(Constant.ZK_DATA_PATH, new Watcher() {
+//				public void process(WatchedEvent event) {
+//					if (event.getType() == Event.EventType.NodeChildrenChanged) {
+//						watchNode(zk);
+//					}
+//				}
+//			});
+//			
+//			List<String> dataList = new ArrayList<String>();
+//			for (String node : nodeList) {
+//				byte[] bytes = zk.getData(Constant.ZK_DATA_PATH + "/" + node, false, null);
+//				dataList.add(new String(bytes));
+//			}
+//			LOGGER.debug("node data: {}", dataList);
+//			this.dataList = dataList;
+//		} catch (KeeperException e) {
+//			LOGGER.debug("", e);
+//		} catch (InterruptedException e) {
+//			LOGGER.debug("", e);
+//		}
+//	}
+	
 	/**
 	 * 服务发现， 如果ZK 出现变动
 	 * @param zk
 	 */
-	private void watchNode(final ZooKeeper zk) {
+	private void watchNode(final ZooKeeper zk, final String node) {
 		try {
-			List<String> nodeList = zk.getChildren(Constant.ZK_DATA_PATH, new Watcher() {
+			List<String> nodeList = zk.getChildren(Constant.ZK_REGISTRY_PATH + "/" + node, new Watcher() {
 				public void process(WatchedEvent event) {
 					if (event.getType() == Event.EventType.NodeChildrenChanged) {
-						watchNode(zk);
+						watchNode(zk, node);
 					}
 				}
 			});
 			
-			List<String> dataList = new ArrayList<String>();
-			for (String node : nodeList) {
-				byte[] bytes = zk.getData(Constant.ZK_DATA_PATH + "/" + node, false, null);
-				dataList.add(new String(bytes));
-			}
+//			List<String> dataList = new ArrayList<String>();
+//			for (String nd : nodeList) {
+//				byte[] bytes = zk.getData(Constant.ZK_REGISTRY_PATH + "/" + node, false, null);
+//				dataList.add(new String(bytes));
+//			}
 			LOGGER.debug("node data: {}", dataList);
-			this.dataList = dataList;
+			this.dataList = nodeList;
 		} catch (KeeperException e) {
 			LOGGER.debug("", e);
 		} catch (InterruptedException e) {
 			LOGGER.debug("", e);
 		}
+	}
+	
+	private ZooKeeper getZk() {
+		if (zk == null) {
+			connectServer();
+		} 
+		return zk;
 	}
 }

@@ -50,7 +50,7 @@ public class RpcProxy {
 				
 				//服务发现, ZK中取得服务地址
 				if (null != serviceDiscovery) {
-					serverAddress = serviceDiscovery.discover(); //发现服务
+					serverAddress = serviceDiscovery.discover(method.getDeclaringClass().getName()); //发现服务
 				}
 				
 				String[] array = serverAddress.split(":");
