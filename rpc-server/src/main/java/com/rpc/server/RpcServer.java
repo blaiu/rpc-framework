@@ -45,7 +45,7 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
 	 */
 	public void afterPropertiesSet() throws Exception {
 		
-		EventLoopGroup bossGroup = new NioEventLoopGroup();
+		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap();
@@ -92,7 +92,6 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
 		if (MapUtils.isNotEmpty(serviceBeanMap)) {
 			for (Object serviceBean : serviceBeanMap.values()) {
 				String interfaceName = serviceBean.getClass().getAnnotation(RpcService.class).value().getName();
-				System.out.println(interfaceName);
 				handlerMap.put(interfaceName, serviceBean);
 			}
 		}
