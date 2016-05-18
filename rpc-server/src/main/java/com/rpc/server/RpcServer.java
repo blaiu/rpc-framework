@@ -46,7 +46,7 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
+		EventLoopGroup workerGroup = new NioEventLoopGroup(200);
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap();
 			bootstrap.group(bossGroup, workerGroup)
